@@ -8,8 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>
-
-
+#include <sys/wait.h>
 
 int main(){
 	int socket_serveur=creer_serveur(8080);
@@ -57,5 +56,5 @@ void initialiser_signaux(void){
 }
 
 void traitement_signal(int sig){
-	printf("Signal %d reçu\n", sig);
+	while (waitpid(-1,NULL,WNOHANG)>0);
 }
