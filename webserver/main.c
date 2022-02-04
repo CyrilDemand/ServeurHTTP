@@ -23,19 +23,25 @@ int main(){
 	}
 
 	while (1){
-		
-		socket_client = accept(socket_serveur, NULL, NULL);
-		if (socket_client == -1){
-			perror("accept");
-		}
 
-		for (int i=0;i<10;i++){
-			const char *message_bienvenue = "Bonjour, bienvenue sur mon serveur\n";
 			
-			write(socket_client, message_bienvenue, strlen(message_bienvenue));
-			
-			sleep(1);
+		socket_client = accept(socket_serveur, NULL, NULL);
+		if (fork()==0) {
+
+			if (socket_client == -1){
+				perror("accept");
+			}
+
+			for (int i=0;i<10;i++){
+				const char *message_bienvenue = "Bonjour, bienvenue sur mon serveur\n";
+				
+				write(socket_client, message_bienvenue, strlen(message_bienvenue));
+				
+				sleep(1);
+			}
+		
 		}
+		close(socket_client);
 		
 	}
 }
