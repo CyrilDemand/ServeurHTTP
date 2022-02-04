@@ -2,7 +2,7 @@
 #define MAIN_H
 
 void initialiser_signaux(void);
-void traitement_signal(int sig);
+void traitement_signal();
 
 #endif
 
