@@ -14,22 +14,8 @@
 #define TAILLE_MAX 8192
 
 int process_client(FILE* file_client){
-	for (int i=0;i<3;i++){
-	
-		fprintf(file_client,"[%d] Bonjour !\n",i);
-		fflush(file_client);
-
-		//write(socket_client, message_bienvenue, strlen(message_bienvenue));
-		
-		sleep(1);
-	}
-
-	char buffer[TAILLE_MAX];
-	fgets(buffer,TAILLE_MAX,file_client);
-
-	fprintf(file_client,"<Zyzz> %s\n",buffer);
+	fprintf(file_client,"Bienvenue chez Zyzz !\n");
 	fflush(file_client);
-
 	return 0;
 }
 
@@ -58,6 +44,22 @@ int main(){
 		int pid=fork();
 		if (pid==0) {
 			process_client(file_client);
+
+			char buffer[TAILLE_MAX];
+			fgets(buffer,TAILLE_MAX,file_client);
+			if (strcmp("GET / HTTP/1.1\r\n",buffer)==0){
+				int contentLength=0;
+
+				do{
+					fgets(buffer,TAILLE_MAX,file_client);
+					contentLength+=strlen(buffer);
+				}while(strcmp(buffer,"\r\n"));
+				contentLength+=2; //pour pas compter la dernière ligne "\r\n"
+				fprintf(file_client,"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n",contentLength);
+			}else{
+				fprintf(file_client,"HTTP/1.1 400 Bad Request\r\nConnection: close\r\nContent-Length: 17\r\n");
+			}
+
 			fclose(file_client);
 			return EXIT_SUCCESS;
 		}

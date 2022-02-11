@@ -28,3 +28,21 @@ Cela est du au fait que l'option "::1" ferme le port, le serveur n'a donc pas ac
 ---------------------------
 
 Le premier client reçoit d'abord ses messages, puis le deuxième une fois que le premier à tout reçu
+
+
+5.1.2
+
+---------------------------
+3. Quel est le message envoyé par le client web ? (commande curl http://localhost:8080/)
+---------------------------
+
+GET / HTTP/1.1
+
+---------------------------
+4. À l’aide de la RFC, trouvez le nom donné aux trois constituant de la première ligne de la requête envoyée par le
+client.
+---------------------------
+
+GET : méthode
+/ : chemin absolu
+HTTP/1.1 : protocole & version du protocole
