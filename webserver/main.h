@@ -3,7 +3,7 @@
 
 void initialiser_signaux(void);
 void traitement_signal();
-int process_client(int socket_client);
+int process_client(FILE* socket_client);
 
 #endif
 
