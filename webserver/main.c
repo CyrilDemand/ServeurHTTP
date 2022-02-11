@@ -5,10 +5,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>
 #include <sys/wait.h>
+
+int process_client(int socket_client){
+	for (int i=0;i<10;i++){
+		const char *message_bienvenue = "Bonjour, bienvenue sur mon serveur\n";
+		
+		write(socket_client, message_bienvenue, strlen(message_bienvenue));
+		
+		sleep(1);
+	}
+
+	return 0;
+}
 
 int main(){
 	int socket_serveur=creer_serveur(8080);
@@ -18,33 +31,26 @@ int main(){
 	int socket_client;
 	if (socket_serveur==-1){
 		perror("serveur");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	while (1){
 
 			
 		socket_client = accept(socket_serveur, NULL, NULL);
+		if (socket_client == -1){
+			perror("accept");
+		}
 		if (fork()==0) {
-
-			if (socket_client == -1){
-				perror("accept");
-			}
-
-			for (int i=0;i<10;i++){
-				const char *message_bienvenue = "Bonjour, bienvenue sur mon serveur\n";
-				
-				write(socket_client, message_bienvenue, strlen(message_bienvenue));
-				
-				sleep(1);
-			}
-		
+			process_client(socket_client);
+			close(socket_client);
+			return EXIT_SUCCESS;
 		}
 		close(socket_client);
 		
 	}
 
-	return EXIT_SUCCES;
+	return EXIT_SUCCESS;
 }
 
 void initialiser_signaux(void){
