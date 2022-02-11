@@ -43,6 +43,8 @@ int main(){
 		close(socket_client);
 		
 	}
+
+	return EXIT_SUCCES;
 }
 
 void initialiser_signaux(void){
@@ -55,6 +57,6 @@ void initialiser_signaux(void){
 	}
 }
 
-void traitement_signal(int sig){
+void traitement_signal(){
 	while (waitpid(-1,NULL,WNOHANG)>0);
 }
