@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <assert.h>
 
 #define TAILLE_MAX 8192
 
@@ -47,6 +48,7 @@ int main(){
 
 			char buffer[TAILLE_MAX];
 			fgets(buffer,TAILLE_MAX,file_client);
+
 			if (strcmp("GET / HTTP/1.1\r\n",buffer)==0){
 				int contentLength=0;
 
@@ -56,6 +58,8 @@ int main(){
 				}while(strcmp(buffer,"\r\n"));
 				contentLength+=2; //pour pas compter la dernière ligne "\r\n"
 				fprintf(file_client,"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n",contentLength);
+			}else if (strcmp("GET /inexistant HTTP/1.1\r\n",buffer)==0){
+				fprintf(file_client,"HTTP/1.1 404 File Not Found\r\n");
 			}else{
 				fprintf(file_client,"HTTP/1.1 400 Bad Request\r\nConnection: close\r\nContent-Length: 17\r\n");
 			}
