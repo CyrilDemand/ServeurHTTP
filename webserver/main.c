@@ -47,16 +47,16 @@ int main(){
 			process_client(file_client);
 
 			char buffer[TAILLE_MAX];
-			fgets(buffer,TAILLE_MAX,file_client);
+			fgets_or_exit(buffer,TAILLE_MAX,file_client);
 
 			if (strcmp("GET / HTTP/1.1\r\n",buffer)==0){
 				int contentLength=0;
 
 				do{
-					fgets(buffer,TAILLE_MAX,file_client);
+					fgets_or_exit(buffer,TAILLE_MAX,file_client);
 					contentLength+=strlen(buffer);
 				}while(strcmp(buffer,"\r\n"));
-				contentLength+=2; //pour pas compter la dernière ligne "\r\n"
+				contentLength-=2;//pour pas compter la dernière ligne "\r\n" 
 				fprintf(file_client,"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n",contentLength);
 			}else if (strcmp("GET /inexistant HTTP/1.1\r\n",buffer)==0){
 				fprintf(file_client,"HTTP/1.1 404 File Not Found\r\n");
@@ -86,4 +86,12 @@ void initialiser_signaux(void){
 
 void traitement_signal(){
 	while (waitpid(-1,NULL,WNOHANG)>0);
+}
+
+char *fgets_or_exit(char *buffer, int size, FILE *stream){
+	char* res=fgets(buffer,size,stream);
+	if (res==NULL){
+		exit(0);
+	}
+	return res;
 }
