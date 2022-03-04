@@ -23,21 +23,20 @@ int process_client(FILE* file_client){
 }
 
 int main(){
+	printf("[LOG] Création du serveur\n");
 	int socket_serveur=creer_serveur(8080);
 	if (socket_serveur==-1){
 		perror("serveur");
 		return EXIT_FAILURE;
 	}
-
+	printf("[LOG] Initialisation des signaux\n");
 	initialiser_signaux();
 
 	int socket_client;
 	
-	
-
 	while (1){
 
-			
+		printf("[LOG] Attente d'une connexion client\n");
 		socket_client = accept(socket_serveur, NULL, NULL);
 		if (socket_client == -1){
 			perror("accept");
@@ -46,36 +45,45 @@ int main(){
 
 		int pid=fork();
 		if (pid==0) {
+			printf("[LOG] Gestion du processus client\n");
 			process_client(file_client);
 
 			char buffer[TAILLE_MAX];
+			printf("[LOG] Récuperation de la requête du client\n");
 			fgets_or_exit(buffer,TAILLE_MAX,file_client);
 
 			http_request request;
+			printf("[LOG] Parsage de la requête\n");
 			int parse_ret=parse_http_request(buffer, &request);
 			
 			char* motd="Bienvenue chez Zyzz !\n";
 
+			printf("[LOG] Traitement de la requête\n");
 			if (parse_ret == -1) {
 				if (request.method == HTTP_UNSUPPORTED){
+					printf("[LOG] 405 : non autorisé\n");
 					send_response(file_client, 405, "Method Not Allowed", "Method Not Allowed\r\n");
 				}else{
+					printf("[LOG] 400 : mauvaise requete\n");
 					send_response(file_client, 400, "Bad Request", "Bad request\r\n");
 				}
-			}else if (strcmp(request.target, "/") == 0){
-
+			}else if (strcmp(request.target,"/") ==0){
+				printf("[LOG] 200 : OK (avec /)\n");
 				int contentLength=skip_headers(file_client);
 
 				char buffer[50];
 				snprintf(buffer, sizeof(buffer), "Content-Length: %d\r\n%s\r\n",contentLength,motd);
 				
 				send_response(file_client, 200, "OK", buffer);
+			}else if (check_and_open(rewrite_target(request.target),".") != NULL){
+				printf("[LOG] 200 : OK (sans /)\n");
+				send_response(file_client, 200, "OK", buffer);
 			}else{
+				printf("[LOG] 404 : pas trouvé\n");
 				send_response(file_client, 404, "Not Found", "Not Found\r\n");
 			}
 
-
-
+			printf("[LOG] Fermeture du client\n");
 			fclose(file_client);
 			return EXIT_SUCCESS;
 		}
@@ -129,7 +137,7 @@ void send_response(FILE *client, int code, const char *reason_phrase,const char 
 
 char* rewrite_target(char *target){
     int i=0;
-    while (target[i]!='?' && i<strlen(target)){
+    while (target[i]!='?' && target[i]!='\0'){
         i++;
     }
 
@@ -138,4 +146,13 @@ char* rewrite_target(char *target){
     truc[i]='\0';
     
     return truc;
+}
+
+FILE *check_and_open(const char *target, const char *document_root){
+	char path[4096];
+	strcpy(path,document_root);
+	strcat(path,target);
+	printf("[LOG] Path demandé : %s\n",path);
+	FILE* statusopen=fopen(path,"r");
+	return statusopen;
 }
