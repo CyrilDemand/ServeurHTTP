@@ -12,6 +12,8 @@
 #include <sys/wait.h>
 #include <assert.h>
 
+#include "http_parse.h"
+
 #define TAILLE_MAX 8192
 
 int process_client(FILE* file_client){
@@ -49,20 +51,30 @@ int main(){
 			char buffer[TAILLE_MAX];
 			fgets_or_exit(buffer,TAILLE_MAX,file_client);
 
-			if (strcmp("GET / HTTP/1.1\r\n",buffer)==0){
-				int contentLength=0;
+			http_request request;
+			int parse_ret=parse_http_request(buffer, &request);
+			
+			char* motd="Bienvenue chez Zyzz !\n";
 
-				do{
-					fgets_or_exit(buffer,TAILLE_MAX,file_client);
-					contentLength+=strlen(buffer);
-				}while(strcmp(buffer,"\r\n"));
-				contentLength-=2;//pour pas compter la dernière ligne "\r\n" 
-				fprintf(file_client,"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n",contentLength);
-			}else if (strcmp("GET /inexistant HTTP/1.1\r\n",buffer)==0){
-				fprintf(file_client,"HTTP/1.1 404 File Not Found\r\n");
+			if (parse_ret == -1) {
+				if (request.method == HTTP_UNSUPPORTED){
+					send_response(file_client, 405, "Method Not Allowed", "Method Not Allowed\r\n");
+				}else{
+					send_response(file_client, 400, "Bad Request", "Bad request\r\n");
+				}
+			}else if (strcmp(request.target, "/") == 0){
+
+				int contentLength=skip_headers(file_client);
+
+				char buffer[50];
+				snprintf(buffer, sizeof(buffer), "Content-Length: %d\r\n%s\r\n",contentLength,motd);
+				
+				send_response(file_client, 200, "OK", buffer);
 			}else{
-				fprintf(file_client,"HTTP/1.1 400 Bad Request\r\nConnection: close\r\nContent-Length: 17\r\n");
+				send_response(file_client, 404, "Not Found", "Not Found\r\n");
 			}
+
+
 
 			fclose(file_client);
 			return EXIT_SUCCESS;
@@ -70,7 +82,6 @@ int main(){
 		fclose(file_client);
 		
 	}
-
 	return EXIT_SUCCESS;
 }
 
@@ -94,4 +105,24 @@ char *fgets_or_exit(char *buffer, int size, FILE *stream){
 		exit(0);
 	}
 	return res;
+}
+
+int skip_headers(FILE *client){
+	int contentLength=0;
+	char buffer[TAILLE_MAX];
+	do{
+		fgets_or_exit(buffer,TAILLE_MAX,client);
+		contentLength+=strlen(buffer);
+	}while(strcmp(buffer,"\r\n"));
+	contentLength-=2;//pour pas compter la dernière ligne "\r\n" 
+	return contentLength;
+}
+
+void send_status(FILE *client, int code, const char *reason_phrase){
+	fprintf(client,"HTTP/1.1 %d %s\r\n",code,reason_phrase);
+}
+
+void send_response(FILE *client, int code, const char *reason_phrase,const char *message_body){
+	send_status(client,code,reason_phrase);
+	fprintf(client,"%s\r\n",message_body);
 }
