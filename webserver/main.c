@@ -126,3 +126,16 @@ void send_response(FILE *client, int code, const char *reason_phrase,const char 
 	send_status(client,code,reason_phrase);
 	fprintf(client,"%s\r\n",message_body);
 }
+
+char* rewrite_target(char *target){
+    int i=0;
+    while (target[i]!='?' && i<strlen(target)){
+        i++;
+    }
+
+    char* truc=malloc(sizeof(char)*i);
+    strncpy(truc,&target[0],i);
+    truc[i]='\0';
+    
+    return truc;
+}
