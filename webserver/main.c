@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include "http_parse.h"
 
@@ -58,6 +60,9 @@ int main(){
 			
 			char* motd="Bienvenue chez Zyzz !\n";
 
+
+			FILE* lefd = check_and_open(rewrite_target(request.target),".");
+
 			printf("[LOG] Traitement de la requête\n");
 			if (parse_ret == -1) {
 				if (request.method == HTTP_UNSUPPORTED){
@@ -75,8 +80,13 @@ int main(){
 				snprintf(buffer, sizeof(buffer), "Content-Length: %d\r\n%s\r\n",contentLength,motd);
 				
 				send_response(file_client, 200, "OK", buffer);
-			}else if (check_and_open(rewrite_target(request.target),".") != NULL){
+			}else if (lefd != NULL){
 				printf("[LOG] 200 : OK (sans /)\n");
+
+				int contentLength=get_file_size(fileno(lefd));
+
+				char buffer[50];
+				snprintf(buffer, sizeof(buffer), "Content-Length: %d\r\n",contentLength);
 				send_response(file_client, 200, "OK", buffer);
 			}else{
 				printf("[LOG] 404 : pas trouvé\n");
@@ -155,4 +165,15 @@ FILE *check_and_open(const char *target, const char *document_root){
 	printf("[LOG] Path demandé : %s\n",path);
 	FILE* statusopen=fopen(path,"r");
 	return statusopen;
+}
+
+int get_file_size(int fd){
+    struct stat buf;
+    if(fstat(fd, &buf)){
+        printf("\nfstat error: [%s]\n",strerror(errno)); 
+        close(fd);
+        return -1;
+    }
+    int tailleOctet = buf.st_size;
+    return tailleOctet;
 }

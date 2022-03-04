@@ -12,6 +12,7 @@ void send_response(FILE *client, int code, const char *reason_phrase,const char 
 
 char *rewrite_target(char *target);
 FILE *check_and_open(const char *target, const char *document_root);
+int get_file_size(int fd);
 
 #endif
 
